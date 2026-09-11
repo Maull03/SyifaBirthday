@@ -1,0 +1,175 @@
+:root {
+  --bg-color: #faf6f0;
+  --card-bg: #ffffff;
+  --text-primary: #3d3431;
+  --text-secondary: #8a7c77;
+  --accent-pink: #d9938b;
+  --accent-pink-hover: #c9827a;
+  --accent-pink-light: #fdf5f3;
+  --border-color: #ede2d5;
+  --error-color: #c9827a;
+  --shadow-sm: 0 4px 12px rgba(188, 170, 160, 0.08);
+  --shadow-md: 0 16px 36px rgba(188, 170, 160, 0.12);
+  --shadow-lg: 0 24px 48px rgba(188, 170, 160, 0.16);
+
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background-color: var(--bg-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  overflow-x: hidden;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: #e5dacd;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #d5c8bb;
+}
+
+/* Shake Animation */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  20%, 60% {
+    transform: translateX(-6px);
+  }
+  40%, 80% {
+    transform: translateX(6px);
+  }
+}
+
+.shake {
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* Base floating animations for Petals */
+@keyframes float-petal {
+  0% {
+    transform: translateY(-10vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(110vh) translateX(80px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Subtle particle pulse / float */
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-20px) translateX(10px);
+    opacity: 0.6;
+  }
+}
+
+.petal {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.particle {
+  position: absolute;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(217, 147, 139, 0.4) 0%, rgba(217, 147, 139, 0) 70%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* Soft transition effects */
+.transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.5s cubic-bezier(0.25, 1, 0.5, 1), backdrop-filter 1.5s ease;
+  backdrop-filter: blur(0px);
+}
+
+.transition-overlay.active {
+  opacity: 1;
+  backdrop-filter: blur(20px);
+}
+
+/* Hide default browser autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ─── Blooming Flower Sway Animations ─────────────────────────────────────── */
+
+/* Left-side flowers sway: anchor bottom, tip sways slightly right then left */
+@keyframes sway-left {
+  0%, 100% { transform: rotate(-1.2deg); }
+  50%       { transform: rotate( 1.2deg); }
+}
+
+/* Right-side flowers sway: mirror of left */
+@keyframes sway-right {
+  0%, 100% { transform: rotate( 1.2deg); }
+  50%       { transform: rotate(-1.2deg); }
+}
+
+.bloom-sway-left {
+  transform-origin: bottom center;
+  animation: sway-left 5s ease-in-out infinite;
+}
+
+.bloom-sway-right {
+  transform-origin: bottom center;
+  animation: sway-right 5.4s ease-in-out infinite;
+}
+
