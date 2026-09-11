@@ -301,114 +301,12 @@ export default function MemoryBook({ onFinish }) {
           </div>
         )}
 
-        {/* ── OPENING ANIMATION ── */}
-        {bookState === 'opening' && (
-          <>
-            {/* ── Layer 0: Open spread already underneath (revealed by cover moving) ── */}
-            <div style={{
-              position: 'absolute', inset: 0, zIndex: 3,
-              display: 'flex', backgroundColor: '#fff',
-              borderRadius: '12px', overflow: 'hidden',
-              border: '1px solid var(--border-color)',
-              boxShadow: 'var(--shadow-lg)',
-            }}>
-              <FullSpread spread={spreads[0]} pageNumber={1} />
-              <Spine />
-            </div>
-
-            {/*
-              ── Layer 0.5: Left-half paper mask ──────────────────────────────
-              The 3D cover only sits on the RIGHT half (left: 50%).
-              Without this mask, the left page (/images/0.jpeg) would be fully
-              visible from frame 1 of the animation — before the cover has
-              moved at all. This solid paper-coloured panel sits above the
-              spread (zIndex 5) but below the shadow/cover (zIndex 9/10),
-              visually matching the closed book's stacked page-edges on the
-              left side. It is removed automatically when bookState becomes
-              'open', which only happens after the full animation sequence
-              finishes. No timeouts, no fades — pure state-driven rendering.
-            */}
-            <div style={{
-              position: 'absolute',
-              top: 0, bottom: 0, left: 0,
-              width: '50%',
-              zIndex: 5,
-              backgroundColor: '#f9f7f3',
-              borderRadius: '12px 0 0 12px',
-              borderRight: '1px solid var(--border-color)',
-              pointerEvents: 'none',
-            }} />
-
-            {/* ── Layer 1: Dynamic shadow on the pages beneath the cover ── */}
-            <motion.div
-              initial={{ opacity: 0.18, scaleX: 1 }}
-              animate={openShadowControls}
-              style={{
-                position: 'absolute',
-                top: 0, bottom: 0,
-                left: '50%', width: '50%',
-                zIndex: 9,
-                pointerEvents: 'none',
-                transformOrigin: 'left center',
-                background: 'linear-gradient(to right, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.08) 55%, transparent 100%)',
-              }}
-            />
-
-            {/* ── Layer 2: Animated 3D cover (front face + back face + edge thickness) ── */}
-            <motion.div
-              initial={{ rotateY: 0, z: 0, scale: 1 }}
-              animate={openCoverControls}
-              style={{
-                position: 'absolute',
-                left: '50%', width: '50%', height: '100%',
-                transformOrigin: 'left center',
-                transformStyle: 'preserve-3d',
-                zIndex: 10,
-                willChange: 'transform',
-              }}
-            >
-              {/* Front face: the visible cover art */}
-              <div style={{
-                position: 'absolute', inset: 0,
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(0deg)',
-              }}>
-                <CoverFace />
-              </div>
-
-              {/* Cover edge — gives illusion of physical thickness */}
-              <div style={{
-                position: 'absolute',
-                top: 0, left: 0, bottom: 0,
-                width: '5px',
-                background: 'linear-gradient(to right, #a09088, #c8bdb8)',
-                transform: 'rotateY(-90deg) translateZ(0px)',
-                transformOrigin: 'left center',
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-              }} />
-
-              {/* Back face: inside of the cover (visible when past 90deg) */}
-              <div style={{
-                position: 'absolute', inset: 0,
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-                background: 'linear-gradient(135deg, #f5f0eb 0%, #ede8e2 100%)',
-                borderRadius: '0 6px 6px 0',
-                boxShadow: 'inset 2px 0 8px rgba(0,0,0,0.06)',
-              }} />
-            </motion.div>
-          </>
-        )}
-
-        {/* ── OPEN STATE ── */}
-        {bookState === 'open' && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 3, backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)', transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d' }}>
+        {/* ── BOOK SPREAD CONTAINER (Persistent during 'opening' and 'open') ── */}
+        {bookState !== 'closed' && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 3, backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
 
             {/* BASE: Current spread — ALWAYS rendered, never unmounts.
-                Eliminates the mount/unmount flash at turn start and turn end. */}
+                Eliminates the mount/unmount flash at turn start, turn end, and opening! */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 1 }}>
               <FullSpread spread={cur} pageNumber={currentIndex + 1} />
             </div>
@@ -485,9 +383,87 @@ export default function MemoryBook({ onFinish }) {
           </div>
         )}
 
+        {/* ── OPENING ANIMATION OVERLAYS (Only active while book is opening) ── */}
+        {bookState === 'opening' && (
+          <>
+            {/* Layer 0.5: Left-half paper mask */}
+            <div style={{
+              position: 'absolute',
+              top: 0, bottom: 0, left: 0,
+              width: '50%',
+              zIndex: 5,
+              backgroundColor: '#f9f7f3',
+              borderRadius: '12px 0 0 12px',
+              borderRight: '1px solid var(--border-color)',
+              pointerEvents: 'none',
+            }} />
 
-        {/* Page stack decorative borders (open state) */}
-        {bookState === 'open' && (
+            {/* Layer 1: Dynamic shadow on the pages beneath the cover */}
+            <motion.div
+              initial={{ opacity: 0.18, scaleX: 1 }}
+              animate={openShadowControls}
+              style={{
+                position: 'absolute',
+                top: 0, bottom: 0,
+                left: '50%', width: '50%',
+                zIndex: 9,
+                pointerEvents: 'none',
+                transformOrigin: 'left center',
+                background: 'linear-gradient(to right, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.08) 55%, transparent 100%)',
+              }}
+            />
+
+            {/* Layer 2: Animated 3D cover */}
+            <motion.div
+              initial={{ rotateY: 0, z: 0, scale: 1 }}
+              animate={openCoverControls}
+              style={{
+                position: 'absolute',
+                left: '50%', width: '50%', height: '100%',
+                transformOrigin: 'left center',
+                transformStyle: 'preserve-3d',
+                zIndex: 10,
+                willChange: 'transform',
+              }}
+            >
+              {/* Front face: the visible cover art */}
+              <div style={{
+                position: 'absolute', inset: 0,
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'rotateY(0deg)',
+              }}>
+                <CoverFace />
+              </div>
+
+              {/* Cover edge — gives illusion of physical thickness */}
+              <div style={{
+                position: 'absolute',
+                top: 0, left: 0, bottom: 0,
+                width: '5px',
+                background: 'linear-gradient(to right, #a09088, #c8bdb8)',
+                transform: 'rotateY(-90deg) translateZ(0px)',
+                transformOrigin: 'left center',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+              }} />
+
+              {/* Back face: inside of the cover (visible when past 90deg) */}
+              <div style={{
+                position: 'absolute', inset: 0,
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)',
+                background: 'linear-gradient(135deg, #f5f0eb 0%, #ede8e2 100%)',
+                borderRadius: '0 6px 6px 0',
+                boxShadow: 'inset 2px 0 8px rgba(0,0,0,0.06)',
+              }} />
+            </motion.div>
+          </>
+        )}
+
+        {/* Page stack decorative borders (present throughout opening and open states) */}
+        {bookState !== 'closed' && (
           <>
             <div style={{ position: 'absolute', inset: '2px 4px', backgroundColor: '#f7f4ee', border: '1px solid var(--border-color)', borderRadius: '12px', transform: 'rotate(0.4deg)', zIndex: 1, pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', inset: '4px 2px', backgroundColor: '#fbf9f6', border: '1px solid var(--border-color)', borderRadius: '12px', transform: 'rotate(-0.4deg)', zIndex: 2, pointerEvents: 'none' }} />
