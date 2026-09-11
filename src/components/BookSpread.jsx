@@ -58,7 +58,6 @@ export function BookPage({
             alt={isRight ? 'Memory photograph right' : 'Memory photograph left'}
             className="photo-image"
             loading="eager"
-            decoding="async"
             onError={(e) => {
               e.target.style.display = 'none';
               const fallback = e.target.nextSibling;

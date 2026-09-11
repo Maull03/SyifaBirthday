@@ -85,20 +85,22 @@ export default function MemoryBook({ onFinish }) {
   ];
   const total = spreads.length;
 
-  // Dynamic smart preloader: only preloads current and next spreads
-  // Prevents network/CPU congestion and keeps iOS Safari RAM footprint minimal
+  // Dynamic smart preloader: preloads and decodes current, next, and previous spreads
+  // Using .decode() guarantees instant GPU caching and eliminates blank frames on iOS Safari
   useEffect(() => {
-    const toPreload = [currentIndex, currentIndex + 1];
+    const toPreload = [currentIndex - 1, currentIndex, currentIndex + 1, currentIndex + 2];
     toPreload.forEach((idx) => {
       const spread = spreads[idx];
       if (!spread) return;
       if (spread.left && spread.left.startsWith('/')) {
         const img = new Image();
         img.src = spread.left;
+        if (img.decode) img.decode().catch(() => {});
       }
       if (spread.right && spread.right.startsWith('/')) {
         const img = new Image();
         img.src = spread.right;
+        if (img.decode) img.decode().catch(() => {});
       }
     });
   }, [currentIndex]);
@@ -144,6 +146,8 @@ export default function MemoryBook({ onFinish }) {
       transition: { duration: 0.15, ease: [0.34, 1.56, 0.64, 1] },
     });
 
+    // Wait 2 frames so the browser commits and paints the open state before removing opening overlays
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     setBookState('open');
   };
 
@@ -160,7 +164,6 @@ export default function MemoryBook({ onFinish }) {
     try {
       // Wait TWO frames: one for React to commit the state, one for the
       // browser to paint the turning-page element into the DOM.
-      // The motion.div uses initial={{ rotateY: 0 }} so no .set() needed here.
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
       const toAngle = direction === 'next' ? -180 : 180;
@@ -176,8 +179,12 @@ export default function MemoryBook({ onFinish }) {
         transition: { duration: 0.75, ease: [0.22, 0.61, 0.36, 1] },
       });
 
+      // Update current spread index
       setCurrentIndex(toIdx);
       if (direction === 'next' && toIdx === total - 1 && onFinish) onFinish();
+
+      // Ensure Safari paints the base spread with new content BEFORE turning layers unmount
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     } catch (err) {
       console.error('Page turn error:', err);
     } finally {
@@ -276,8 +283,8 @@ export default function MemoryBook({ onFinish }) {
         }}
       >
 
-        {/* Stacked page edges (closed / opening state) */}
-        {bookState !== 'open' && (
+        {/* Stacked page edges (closed state only) */}
+        {bookState === 'closed' && (
           <>
             <div style={{ position: 'absolute', left: 'calc(50% + 4px)', top: '3px', width: 'calc(50% - 6px)', height: 'calc(100% - 6px)', backgroundColor: '#f5f2ec', border: '1px solid var(--border-color)', borderRadius: '0 8px 8px 0', zIndex: 1 }} />
             <div style={{ position: 'absolute', left: 'calc(50% + 2px)', top: '1px', width: 'calc(50% - 3px)', height: 'calc(100% - 2px)', backgroundColor: '#f9f7f3', border: '1px solid var(--border-color)', borderRadius: '0 8px 8px 0', zIndex: 2 }} />
@@ -303,7 +310,7 @@ export default function MemoryBook({ onFinish }) {
 
         {/* ── BOOK SPREAD CONTAINER (Persistent during 'opening' and 'open') ── */}
         {bookState !== 'closed' && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 3, backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 3, backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)', transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d' }}>
 
             {/* BASE: Current spread — ALWAYS rendered, never unmounts.
                 Eliminates the mount/unmount flash at turn start, turn end, and opening! */}
@@ -358,18 +365,19 @@ export default function MemoryBook({ onFinish }) {
                     width: '50%', height: '100%',
                     transformOrigin: isNext ? 'left center' : 'right center',
                     transformStyle: 'preserve-3d',
-                    WebkitTransformStyle: 'preserve-3d',   /* Safari prefix */
+                    WebkitTransformStyle: 'preserve-3d',
+                    willChange: 'transform',
                   }}
                 >
-                  {/* Front face — is-turning suppresses Safari mount transition */}
-                  <div className="is-turning" style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(0deg)' }}>
+                  {/* Front face — 1px Z separation prevents Safari Retina Z-fighting */}
+                  <div className="is-turning" style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(0deg) translateZ(1px)', WebkitTransform: 'rotateY(0deg) translateZ(1px)' }}>
                     {isNext
                       ? <PageHalf imageSrc={cur.right} side="right" isClosing={cur.isClosing} />
                       : <PageHalf imageSrc={cur.left} side="left" pageNumber={currentIndex + 1} />
                     }
                   </div>
-                  {/* Back face — is-turning suppresses Safari mount transition */}
-                  <div className="is-turning" style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                  {/* Back face — 1px Z separation prevents Safari Retina Z-fighting */}
+                  <div className="is-turning" style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg) translateZ(1px)', WebkitTransform: 'rotateY(180deg) translateZ(1px)' }}>
                     {isNext
                       ? <PageHalf imageSrc={tgt.left} side="left" pageNumber={turning.toIdx + 1} />
                       : <PageHalf imageSrc={tgt.right} side="right" isClosing={tgt.isClosing} />
@@ -386,13 +394,13 @@ export default function MemoryBook({ onFinish }) {
         {/* ── OPENING ANIMATION OVERLAYS (Only active while book is opening) ── */}
         {bookState === 'opening' && (
           <>
-            {/* Layer 0.5: Left-half paper mask */}
+            {/* Layer 0.5: Clean left-half backing paper ready to receive cover */}
             <div style={{
               position: 'absolute',
               top: 0, bottom: 0, left: 0,
               width: '50%',
-              zIndex: 5,
-              backgroundColor: '#f9f7f3',
+              zIndex: 4,
+              backgroundColor: '#faf8f5',
               borderRadius: '12px 0 0 12px',
               borderRight: '1px solid var(--border-color)',
               pointerEvents: 'none',
@@ -422,16 +430,18 @@ export default function MemoryBook({ onFinish }) {
                 left: '50%', width: '50%', height: '100%',
                 transformOrigin: 'left center',
                 transformStyle: 'preserve-3d',
+                WebkitTransformStyle: 'preserve-3d',
                 zIndex: 10,
                 willChange: 'transform',
               }}
             >
-              {/* Front face: the visible cover art */}
+              {/* Front face: the visible cover art with 1px Z separation */}
               <div style={{
                 position: 'absolute', inset: 0,
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(0deg)',
+                transform: 'rotateY(0deg) translateZ(1px)',
+                WebkitTransform: 'rotateY(0deg) translateZ(1px)',
               }}>
                 <CoverFace />
               </div>
@@ -443,21 +453,22 @@ export default function MemoryBook({ onFinish }) {
                 width: '5px',
                 background: 'linear-gradient(to right, #a09088, #c8bdb8)',
                 transform: 'rotateY(-90deg) translateZ(0px)',
+                WebkitTransform: 'rotateY(-90deg) translateZ(0px)',
                 transformOrigin: 'left center',
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
               }} />
 
-              {/* Back face: inside of the cover (visible when past 90deg) */}
+              {/* Back face: Photo 0 (the inside of the cover) with 1px Z separation */}
               <div style={{
                 position: 'absolute', inset: 0,
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)',
-                background: 'linear-gradient(135deg, #f5f0eb 0%, #ede8e2 100%)',
-                borderRadius: '0 6px 6px 0',
-                boxShadow: 'inset 2px 0 8px rgba(0,0,0,0.06)',
-              }} />
+                transform: 'rotateY(180deg) translateZ(1px)',
+                WebkitTransform: 'rotateY(180deg) translateZ(1px)',
+              }}>
+                <PageHalf imageSrc={spreads[0].left} side="left" pageNumber={1} />
+              </div>
             </motion.div>
           </>
         )}
@@ -465,8 +476,8 @@ export default function MemoryBook({ onFinish }) {
         {/* Page stack decorative borders (present throughout opening and open states) */}
         {bookState !== 'closed' && (
           <>
-            <div style={{ position: 'absolute', inset: '2px 4px', backgroundColor: '#f7f4ee', border: '1px solid var(--border-color)', borderRadius: '12px', transform: 'rotate(0.4deg)', zIndex: 1, pointerEvents: 'none' }} />
-            <div style={{ position: 'absolute', inset: '4px 2px', backgroundColor: '#fbf9f6', border: '1px solid var(--border-color)', borderRadius: '12px', transform: 'rotate(-0.4deg)', zIndex: 2, pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', inset: '2px 4px', backgroundColor: '#f7f4ee', border: '1px solid var(--border-color)', borderRadius: '12px', transform: 'rotate(0.4deg) translateZ(-4px)', zIndex: 1, pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', inset: '4px 2px', backgroundColor: '#fbf9f6', border: '1px solid var(--border-color)', borderRadius: '12px', transform: 'rotate(-0.4deg) translateZ(-2px)', zIndex: 2, pointerEvents: 'none' }} />
           </>
         )}
       </div>
