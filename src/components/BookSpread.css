@@ -147,17 +147,21 @@
 }
 
 /*
-  Safari/iOS fix: When .photo-print mounts inside a page-turn layer (.is-turning),
+  Safari/iOS fix: When elements mount inside a page-turn layer (.is-turning),
   Safari incorrectly fires CSS transitions from the default state (no transform)
   to the final CSS-specified transform (rotate(-1.4deg)), causing a visible "glitch".
   Chrome/Android does NOT do this — it correctly skips transitions on initial mount.
-  Suppressing transitions in turning context prevents this Safari-only bug.
+  Suppressing all transitions in turning context prevents this Safari-only bug.
 */
-.is-turning .photo-print {
+.is-turning,
+.is-turning * {
   transition: none !important;
+  -webkit-transition: none !important;
 }
-.is-turning .photo-image {
-  transition: none !important;
+
+.is-turning .scrapbook-tape {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 /* ── Controlled Asymmetry: Left vs Right Photo Compositions ──────────────── */

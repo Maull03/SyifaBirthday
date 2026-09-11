@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, useAnimation, animate } from 'framer-motion';
 import BookSpread, { BookPage, BookGutter } from './BookSpread';
 
@@ -84,6 +84,20 @@ export default function MemoryBook({ onFinish }) {
     { left: '/images/14.jpeg', right: 'closing', isClosing: true },
   ];
   const total = spreads.length;
+
+  // Preload all scrapbook photos to ensure smooth rendering on Safari/iOS
+  useEffect(() => {
+    spreads.forEach((spread) => {
+      if (spread.left && spread.left.startsWith('/')) {
+        const img = new Image();
+        img.src = spread.left;
+      }
+      if (spread.right && spread.right.startsWith('/')) {
+        const img = new Image();
+        img.src = spread.right;
+      }
+    });
+  }, []);
 
   /* ── Open book — multi-phase physical animation ── */
   const openBook = async () => {
@@ -252,6 +266,7 @@ export default function MemoryBook({ onFinish }) {
         onPointerCancel={bookState === 'open' ? onPointerCancel : undefined}
         style={{
           perspective: '1400px',
+          WebkitPerspective: '1400px',
           width: '100%',
           maxWidth: '360px',
           height: '250px',
@@ -391,7 +406,7 @@ export default function MemoryBook({ onFinish }) {
 
         {/* ── OPEN STATE ── */}
         {bookState === 'open' && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 3, backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
+          <div style={{ position: 'absolute', inset: 0, zIndex: 3, backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)', transformStyle: 'preserve-3d', WebkitTransformStyle: 'preserve-3d' }}>
 
             {/* BASE: Current spread — ALWAYS rendered, never unmounts.
                 Eliminates the mount/unmount flash at turn start and turn end. */}
@@ -403,7 +418,7 @@ export default function MemoryBook({ onFinish }) {
             {turning && (
               <>
                 {/* Layer A: target spread — shows through turned page's back face */}
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 2 }}>
+                <div className="is-turning" style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 2 }}>
                   <FullSpread spread={tgt} pageNumber={turning.toIdx + 1} />
                 </div>
 
