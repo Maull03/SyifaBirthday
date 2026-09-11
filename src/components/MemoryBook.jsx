@@ -139,12 +139,9 @@ export default function MemoryBook({ onFinish }) {
     setTurning({ direction, fromIdx, toIdx });
 
     try {
-      // Ensure controls start cleanly from zero
-      pageControls.set({ rotateY: 0, boxShadow: '0 4px 14px rgba(0,0,0,0.08)' });
-      shadowControls.set({ opacity: 0 });
-
       // Wait TWO frames: one for React to commit the state, one for the
-      // browser to paint the turning-page element into the DOM
+      // browser to paint the turning-page element into the DOM.
+      // The motion.div uses initial={{ rotateY: 0 }} so no .set() needed here.
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
       const toAngle = direction === 'next' ? -180 : 180;
@@ -431,6 +428,7 @@ export default function MemoryBook({ onFinish }) {
             {/* Layer C: 3D turning page sheet — the ONLY element that rotates */}
             {turning && (
               <motion.div
+                key={`turn-${turning.fromIdx}-${turning.direction}`}
                 initial={{ rotateY: 0 }}
                 animate={pageControls}
                 style={{
@@ -440,6 +438,9 @@ export default function MemoryBook({ onFinish }) {
                   width: '50%', height: '100%',
                   transformOrigin: isNext ? 'left center' : 'right center',
                   transformStyle: 'preserve-3d',
+                  willChange: 'transform',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden',
                 }}
               >
                 {/* Front face */}
