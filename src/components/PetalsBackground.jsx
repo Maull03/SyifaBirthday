@@ -11,10 +11,10 @@ const PETAL_SHAPES = [
 ];
 
 export default function PetalsBackground({ speedMultiplier = 1 }) {
-  // Generate random stable properties for petals and particles
+  // Generate random stable properties for petals and particles (optimized for mobile 60fps)
   const config = useMemo(() => {
-    const petals = Array.from({ length: 22 }).map((_, i) => {
-      const size = Math.random() * 16 + 10; // 10px to 26px
+    const petals = Array.from({ length: 12 }).map((_, i) => {
+      const size = Math.random() * 14 + 10; // 10px to 24px
       const shapeIdx = Math.floor(Math.random() * PETAL_SHAPES.length);
       const duration = (Math.random() * 12 + 15) / speedMultiplier; // 15s to 27s
       const delay = Math.random() * -20; // negative delay to have petals already in motion on load
@@ -44,7 +44,7 @@ export default function PetalsBackground({ speedMultiplier = 1 }) {
       };
     });
 
-    const particles = Array.from({ length: 15 }).map((_, i) => {
+    const particles = Array.from({ length: 8 }).map((_, i) => {
       const size = Math.random() * 4 + 2; // 2px to 6px
       const duration = Math.random() * 8 + 8; // 8s to 16s
       const delay = Math.random() * -10;

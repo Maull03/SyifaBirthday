@@ -85,9 +85,13 @@ export default function MemoryBook({ onFinish }) {
   ];
   const total = spreads.length;
 
-  // Preload all scrapbook photos to ensure smooth rendering on Safari/iOS
+  // Dynamic smart preloader: only preloads current and next spreads
+  // Prevents network/CPU congestion and keeps iOS Safari RAM footprint minimal
   useEffect(() => {
-    spreads.forEach((spread) => {
+    const toPreload = [currentIndex, currentIndex + 1];
+    toPreload.forEach((idx) => {
+      const spread = spreads[idx];
+      if (!spread) return;
       if (spread.left && spread.left.startsWith('/')) {
         const img = new Image();
         img.src = spread.left;
@@ -97,7 +101,7 @@ export default function MemoryBook({ onFinish }) {
         img.src = spread.right;
       }
     });
-  }, []);
+  }, [currentIndex]);
 
   /* ── Open book — multi-phase physical animation ── */
   const openBook = async () => {
@@ -169,11 +173,6 @@ export default function MemoryBook({ onFinish }) {
 
       await pageControls.start({
         rotateY: toAngle,
-        boxShadow: [
-          '0 4px 14px rgba(0,0,0,0.08)',
-          '0 14px 30px rgba(0,0,0,0.30)',
-          '0 2px 6px rgba(0,0,0,0.04)',
-        ],
         transition: { duration: 0.75, ease: [0.22, 0.61, 0.36, 1] },
       });
 

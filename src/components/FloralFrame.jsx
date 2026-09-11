@@ -50,20 +50,20 @@ const FLOWERS_CONFIG = [
   { size: 'small',  position: { top: '-12px', right: '142px' }, delay: 1.8, rotation: -12, theme: 'yellow' },
 
   // ── Left Edge vertical strip ──
-  { size: 'medium', position: { top: '22%',   left: '-20px' }, delay: 0.3, rotation: -8,  theme: 'blush' },
-  { size: 'small',  position: { top: '31%',   left: '-8px'  }, delay: 0.6, rotation: 22,  theme: 'cream' },
-  { size: 'medium', position: { top: '41%',   left: '-24px' }, delay: 0.9, rotation: -18, theme: 'yellow' },
-  { size: 'small',  position: { top: '51%',   left: '-10px' }, delay: 1.2, rotation: 35,  theme: 'rose'  },
-  { size: 'large',  position: { top: '62%',   left: '-28px' }, delay: 1.5, rotation: -25, theme: 'blush' },
-  { size: 'medium', position: { top: '72%',   left: '-18px' }, delay: 1.8, rotation: 18,  theme: 'cream' },
+  { size: 'medium', position: { top: '22%',   left: '-20px' }, delay: 0.3, rotation: -8,  theme: 'blush', isSide: true },
+  { size: 'small',  position: { top: '31%',   left: '-8px'  }, delay: 0.6, rotation: 22,  theme: 'cream', isSide: true },
+  { size: 'medium', position: { top: '41%',   left: '-24px' }, delay: 0.9, rotation: -18, theme: 'yellow', isSide: true },
+  { size: 'small',  position: { top: '51%',   left: '-10px' }, delay: 1.2, rotation: 35,  theme: 'rose',  isSide: true },
+  { size: 'large',  position: { top: '62%',   left: '-28px' }, delay: 1.5, rotation: -25, theme: 'blush', isSide: true },
+  { size: 'medium', position: { top: '72%',   left: '-18px' }, delay: 1.8, rotation: 18,  theme: 'cream', isSide: true },
 
   // ── Right Edge vertical strip ──
-  { size: 'medium', position: { top: '25%',   right: '-20px' }, delay: 0.5, rotation: 12,  theme: 'yellow' },
-  { size: 'small',  position: { top: '35%',   right: '-8px'  }, delay: 0.8, rotation: -22, theme: 'rose'  },
-  { size: 'large',  position: { top: '47%',   right: '-28px' }, delay: 1.1, rotation: 15,  theme: 'cream' },
-  { size: 'small',  position: { top: '57%',   right: '-10px' }, delay: 1.4, rotation: -30, theme: 'blush' },
-  { size: 'medium', position: { top: '67%',   right: '-24px' }, delay: 1.7, rotation: 25,  theme: 'rose'  },
-  { size: 'small',  position: { top: '77%',   right: '-12px' }, delay: 2.0, rotation: -12, theme: 'cream' },
+  { size: 'medium', position: { top: '25%',   right: '-20px' }, delay: 0.5, rotation: 12,  theme: 'yellow', isSide: true },
+  { size: 'small',  position: { top: '35%',   right: '-8px'  }, delay: 0.8, rotation: -22, theme: 'rose',   isSide: true },
+  { size: 'large',  position: { top: '47%',   right: '-28px' }, delay: 1.1, rotation: 15,  theme: 'cream',  isSide: true },
+  { size: 'small',  position: { top: '57%',   right: '-10px' }, delay: 1.4, rotation: -30, theme: 'blush',  isSide: true },
+  { size: 'medium', position: { top: '67%',   right: '-24px' }, delay: 1.7, rotation: 25,  theme: 'rose',   isSide: true },
+  { size: 'small',  position: { top: '77%',   right: '-12px' }, delay: 2.0, rotation: -12, theme: 'cream',  isSide: true },
 
   // ── Bottom Left Corner Cluster ──
   { size: 'large',  position: { bottom: '-20px', left: '-20px' }, delay: 0.3, rotation: 10,  theme: 'rose'  },
@@ -108,6 +108,7 @@ export default function FloralFrame({ active }) {
             position={cfg.position}
             rotation={cfg.rotation}
             active={active}
+            className={cfg.isSide ? 'floral-side-flower' : ''}
             {...themeProps}
           />
         );

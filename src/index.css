@@ -111,6 +111,8 @@ body {
   position: absolute;
   pointer-events: none;
   z-index: 1;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
 .particle {
@@ -119,6 +121,8 @@ body {
   background: radial-gradient(circle, rgba(217, 147, 139, 0.4) 0%, rgba(217, 147, 139, 0) 70%);
   border-radius: 50%;
   z-index: 1;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
 }
 
 /* Soft transition effects */
@@ -171,5 +175,11 @@ input:-webkit-autofill:focus {
 .bloom-sway-right {
   transform-origin: bottom center;
   animation: sway-right 5.4s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .floral-side-flower {
+    display: none !important;
+  }
 }
 

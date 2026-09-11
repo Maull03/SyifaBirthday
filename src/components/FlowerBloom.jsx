@@ -33,6 +33,7 @@ export default function FlowerBloom({
   petalInner  = '#f8d8d5',
   centerColor = '#f5c475',
   active      = false,
+  className   = '',
 }) {
   const px   = typeof size === 'number' ? size : (SIZE_MAP[size] ?? 88);
   const scale = px / 100;       // viewBox is 100×100
@@ -54,26 +55,17 @@ export default function FlowerBloom({
       />
     ));
 
-  const activeSwayRotation = [rotation - 4, rotation + 4, rotation - 4];
-  const normalSwayRotation = [rotation - 2, rotation + 2, rotation - 2];
+  const swayClass = rotation < 0 ? 'bloom-sway-left' : 'bloom-sway-right';
 
   const flower = (
-    <motion.div
-      initial={{ rotate: rotation }}
-      animate={{ rotate: active ? activeSwayRotation : normalSwayRotation }}
-      transition={{ 
-        duration: active ? 2.5 : 5.5, 
-        ease: 'easeInOut', 
-        repeat: Infinity, 
-        delay: active ? 0 : delay + 3.5 
-      }}
+    <div
+      className={swayClass}
       style={{ 
         transformOrigin: 'center bottom', 
         width: px, 
         height: px, 
         pointerEvents: 'none',
-        filter: active ? 'drop-shadow(0 0 10px rgba(217, 147, 139, 0.45)) brightness(1.15) saturate(1.05)' : 'none',
-        transition: 'filter 1.2s ease-in-out'
+        transform: `rotate(${rotation}deg)`,
       }}
     >
       <svg viewBox="0 0 100 100" width={px} height={px} overflow="visible">
@@ -140,14 +132,14 @@ export default function FlowerBloom({
           );
         })}
       </svg>
-    </motion.div>
+    </div>
   );
 
   /* If position prop supplied, wrap in a fixed-position container */
   if (position) {
     const positionStyle = typeof position === 'string' ? (POS_MAP[position] || {}) : position;
     return (
-      <div style={{ position: 'fixed', ...positionStyle, zIndex: 4, pointerEvents: 'none' }}>
+      <div className={className} style={{ position: 'fixed', ...positionStyle, zIndex: 4, pointerEvents: 'none' }}>
         {flower}
       </div>
     );
