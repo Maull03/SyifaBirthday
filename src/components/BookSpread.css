@@ -18,6 +18,13 @@
     0 4px 12px rgba(65, 50, 45, 0.06);
 }
 
+/* Bare variant: no outer shadow/radius/overflow — used when embedded inside MemoryBook 3D layers */
+.book-spread--bare {
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
+}
+
 /* When inside a two-page spread, each page takes exactly half the width */
 .book-spread .book-page {
   width: 50% !important;
@@ -136,7 +143,21 @@
   transition:
     transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: transform, box-shadow;
+  /* NOTE: will-change removed — it triggers Safari GPU compositing artifacts */
+}
+
+/*
+  Safari/iOS fix: When .photo-print mounts inside a page-turn layer (.is-turning),
+  Safari incorrectly fires CSS transitions from the default state (no transform)
+  to the final CSS-specified transform (rotate(-1.4deg)), causing a visible "glitch".
+  Chrome/Android does NOT do this — it correctly skips transitions on initial mount.
+  Suppressing transitions in turning context prevents this Safari-only bug.
+*/
+.is-turning .photo-print {
+  transition: none !important;
+}
+.is-turning .photo-image {
+  transition: none !important;
 }
 
 /* ── Controlled Asymmetry: Left vs Right Photo Compositions ──────────────── */

@@ -102,9 +102,10 @@ export default function BookSpread({
   pageNumber,
   dateText,
   showGutter = true,
+  bare = false,          // suppress outer shadow/radius/overflow when embedded in 3D context
 }) {
   return (
-    <div className="book-spread">
+    <div className={bare ? 'book-spread book-spread--bare' : 'book-spread'}>
       {/* LEFT PAGE */}
       <BookPage
         side="left"

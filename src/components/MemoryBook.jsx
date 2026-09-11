@@ -23,6 +23,7 @@ function FullSpread({ spread, pageNumber }) {
       isClosingPage={spread.isClosing}
       pageNumber={pageNumber}
       showGutter={false}
+      bare={true}
     />
   );
 }
@@ -392,84 +393,84 @@ export default function MemoryBook({ onFinish }) {
         {bookState === 'open' && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 3, backgroundColor: '#fff', borderRadius: '12px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)' }}>
 
-            {/* Layer A: target spread underneath (visible through turning page) */}
-            {turning && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 3 }}>
-                <FullSpread spread={tgt} pageNumber={turning.toIdx + 1} />
-              </div>
-            )}
+            {/* BASE: Current spread — ALWAYS rendered, never unmounts.
+                Eliminates the mount/unmount flash at turn start and turn end. */}
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 1 }}>
+              <FullSpread spread={cur} pageNumber={currentIndex + 1} />
+            </div>
 
-            {/* Layer B: static half that doesn't turn */}
+            {/* TURN LAYERS: Only present while a page turn is in progress */}
             {turning && (
-              <div style={{
-                position: 'absolute', zIndex: 5,
-                top: 0, bottom: 0,
-                left: isNext ? 0 : '50%',
-                width: '50%', height: '100%',
-              }}>
-                {isNext
-                  ? <PageHalf imageSrc={cur.left} side="left" pageNumber={currentIndex + 1} />
-                  : <PageHalf imageSrc={cur.isClosing ? null : cur.right} side="right" isClosing={cur.isClosing} />
-                }
-                {/* Shadow overlay cast by turning page */}
-                <motion.div
-                  animate={shadowControls}
-                  initial={{ opacity: 0 }}
+              <>
+                {/* Layer A: target spread — shows through turned page's back face */}
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 2 }}>
+                  <FullSpread spread={tgt} pageNumber={turning.toIdx + 1} />
+                </div>
+
+                {/* Layer B: static half — the half of the book that does NOT turn */}
+                <div
+                  className="is-turning"
                   style={{
-                    position: 'absolute', inset: 0, pointerEvents: 'none',
-                    background: isNext
-                      ? 'linear-gradient(to left, rgba(0,0,0,0.18) 0%, transparent 70%)'
-                      : 'linear-gradient(to right, rgba(0,0,0,0.18) 0%, transparent 70%)',
+                    position: 'absolute', zIndex: 5,
+                    top: 0, bottom: 0,
+                    left: isNext ? 0 : '50%',
+                    width: '50%', height: '100%',
                   }}
-                />
-              </div>
-            )}
-
-            {/* Layer C: 3D turning page sheet — the ONLY element that rotates */}
-            {turning && (
-              <motion.div
-                key={`turn-${turning.fromIdx}-${turning.direction}`}
-                initial={{ rotateY: 0 }}
-                animate={pageControls}
-                style={{
-                  position: 'absolute', zIndex: 10,
-                  top: 0, bottom: 0,
-                  left: isNext ? '50%' : 0,
-                  width: '50%', height: '100%',
-                  transformOrigin: isNext ? 'left center' : 'right center',
-                  transformStyle: 'preserve-3d',
-                  willChange: 'transform',
-                  backfaceVisibility: 'hidden',
-                  WebkitBackfaceVisibility: 'hidden',
-                }}
-              >
-                {/* Front face */}
-                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(0deg)' }}>
+                >
                   {isNext
-                    ? <PageHalf imageSrc={cur.right} side="right" isClosing={cur.isClosing} />
-                    : <PageHalf imageSrc={cur.left} side="left" pageNumber={currentIndex + 1} />
+                    ? <PageHalf imageSrc={cur.left} side="left" pageNumber={currentIndex + 1} />
+                    : <PageHalf imageSrc={cur.isClosing ? null : cur.right} side="right" isClosing={cur.isClosing} />
                   }
+                  {/* Shadow cast by the turning page onto the static half */}
+                  <motion.div
+                    animate={shadowControls}
+                    initial={{ opacity: 0 }}
+                    style={{
+                      position: 'absolute', inset: 0, pointerEvents: 'none',
+                      background: isNext
+                        ? 'linear-gradient(to left, rgba(0,0,0,0.18) 0%, transparent 70%)'
+                        : 'linear-gradient(to right, rgba(0,0,0,0.18) 0%, transparent 70%)',
+                    }}
+                  />
                 </div>
-                {/* Back face */}
-                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-                  {isNext
-                    ? <PageHalf imageSrc={tgt.left} side="left" pageNumber={turning.toIdx + 1} />
-                    : <PageHalf imageSrc={tgt.right} side="right" isClosing={tgt.isClosing} />
-                  }
-                </div>
-              </motion.div>
-            )}
 
-            {/* Normal static spread (not turning) */}
-            {!turning && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', zIndex: 4 }}>
-                <FullSpread spread={cur} pageNumber={currentIndex + 1} />
-              </div>
+                {/* Layer C: 3D turning page sheet — the ONLY element that rotates */}
+                <motion.div
+                  key={`turn-${turning.fromIdx}-${turning.direction}`}
+                  initial={{ rotateY: 0 }}
+                  animate={pageControls}
+                  style={{
+                    position: 'absolute', zIndex: 10,
+                    top: 0, bottom: 0,
+                    left: isNext ? '50%' : 0,
+                    width: '50%', height: '100%',
+                    transformOrigin: isNext ? 'left center' : 'right center',
+                    transformStyle: 'preserve-3d',
+                    WebkitTransformStyle: 'preserve-3d',   /* Safari prefix */
+                  }}
+                >
+                  {/* Front face — is-turning suppresses Safari mount transition */}
+                  <div className="is-turning" style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(0deg)' }}>
+                    {isNext
+                      ? <PageHalf imageSrc={cur.right} side="right" isClosing={cur.isClosing} />
+                      : <PageHalf imageSrc={cur.left} side="left" pageNumber={currentIndex + 1} />
+                    }
+                  </div>
+                  {/* Back face — is-turning suppresses Safari mount transition */}
+                  <div className="is-turning" style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                    {isNext
+                      ? <PageHalf imageSrc={tgt.left} side="left" pageNumber={turning.toIdx + 1} />
+                      : <PageHalf imageSrc={tgt.right} side="right" isClosing={tgt.isClosing} />
+                    }
+                  </div>
+                </motion.div>
+              </>
             )}
 
             <Spine />
           </div>
         )}
+
 
         {/* Page stack decorative borders (open state) */}
         {bookState === 'open' && (
